@@ -7,7 +7,6 @@ npm i -g deepseek-tui
 ```
 
 [![CI](https://github.com/Hmbown/DeepSeek-TUI/actions/workflows/ci.yml/badge.svg)](https://github.com/Hmbown/DeepSeek-TUI/actions/workflows/ci.yml)
-[![crates.io](https://img.shields.io/crates/v/deepseek-tui)](https://crates.io/crates/deepseek-tui)
 [![npm](https://img.shields.io/npm/v/deepseek-tui)](https://www.npmjs.com/package/deepseek-tui)
 
 ![DeepSeek TUI screenshot](assets/screenshot.png)
@@ -64,22 +63,24 @@ DEEPSEEK_PROVIDER=nvidia-nim NVIDIA_API_KEY="..." deepseek
 ```
 
 <details>
-<summary>Other install methods</summary>
+<summary>Install from source</summary>
 
 ```bash
-# From crates.io (requires Rust 1.85+)
-cargo install deepseek-tui --locked       # TUI binary
-cargo install deepseek-tui-cli --locked   # CLI facade (deepseek command)
-
-# From source
 git clone https://github.com/Hmbown/DeepSeek-TUI.git
 cd DeepSeek-TUI
-cargo install --path crates/tui --locked
+cargo install --path crates/tui --locked   # requires Rust 1.85+
 ```
 
-The canonical crates.io packages are `deepseek-tui` and `deepseek-tui-cli`. The unrelated `deepseek-cli` crate is not part of this project. crates.io publication can lag the workspace version — use npm or install from source for the latest release surface immediately.
-
 </details>
+
+---
+
+## What's new in v0.5.0
+
+- **Multi-turn tool calls no longer 400 on thinking-mode models.** Every assistant message now replays `reasoning_content` (with a safe placeholder when the round produced none), and a final-pass sanitizer guarantees the wire payload satisfies DeepSeek's thinking-mode contract — even for sessions restored from older checkpoints or sub-agents that bypass the engine path.
+- **Phantom `web.run` references stripped** from prompts and the `web_search` tool ([#25](https://github.com/Hmbown/DeepSeek-TUI/issues/25)).
+
+Full history: [CHANGELOG.md](CHANGELOG.md).
 
 ---
 

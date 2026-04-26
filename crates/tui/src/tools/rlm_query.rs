@@ -250,7 +250,9 @@ impl ToolSpec for RlmQueryTool {
                     for block in &res.content {
                         match block {
                             ContentBlock::Text { text, .. } => text_len += text.len(),
-                            ContentBlock::Thinking { thinking, .. } => thinking_len += thinking.len(),
+                            ContentBlock::Thinking { thinking, .. } => {
+                                thinking_len += thinking.len()
+                            }
                             _ => {}
                         }
                     }
@@ -286,7 +288,9 @@ impl ToolSpec for RlmQueryTool {
             .into_iter()
             .map(|(idx, res)| {
                 let text = match res {
-                    Ok(Ok(response)) => extract_text(&response.content, idx, response.stop_reason.as_deref()),
+                    Ok(Ok(response)) => {
+                        extract_text(&response.content, idx, response.stop_reason.as_deref())
+                    }
                     Ok(Err(e)) => format!("[error: {e}]"),
                     Err(_) => format!(
                         "[error: timed out after {}s]",

@@ -9,8 +9,8 @@ use std::pin::Pin;
 use std::time::Duration;
 
 use anyhow::{Context, Result};
-use tokio::time::timeout as tokio_timeout;
 use serde_json::{Value, json};
+use tokio::time::timeout as tokio_timeout;
 
 /// Default idle timeout for SSE stream reads (300 seconds = 5 minutes).
 /// After this period with no data, the stream is considered stalled and

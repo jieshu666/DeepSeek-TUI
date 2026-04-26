@@ -404,6 +404,9 @@ pub struct App {
     pub auto_compact: bool,
     pub calm_mode: bool,
     pub low_motion: bool,
+    /// Pending #61 (animated working strip). Set from config but not read
+    /// until the footer widget consumes it.
+    #[allow(dead_code)]
     pub fancy_animations: bool,
     pub show_thinking: bool,
     pub show_tool_details: bool,

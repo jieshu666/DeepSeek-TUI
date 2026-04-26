@@ -352,24 +352,26 @@ fn render_sidebar_subagents(f: &mut Frame, area: Rect, app: &App) {
         let usable_rows = area.height.saturating_sub(3) as usize;
         let max_agents = usable_rows.saturating_sub(lines.len());
 
+        let push_agent_row =
+            |lines: &mut Vec<Line<'static>>, summary: &str, detail: &str, color| {
+                lines.push(Line::from(Span::styled(
+                    truncate_line_to_width(summary, content_width.max(1)),
+                    Style::default().fg(color),
+                )));
+                lines.push(Line::from(Span::styled(
+                    format!(
+                        "  {}",
+                        truncate_line_to_width(detail, content_width.saturating_sub(2).max(1))
+                    ),
+                    Style::default().fg(palette::TEXT_DIM),
+                )));
+            };
+
         // Live (progress-only) agents first — they're the freshest signal.
         let mut rendered = 0usize;
         for (id, msg) in progress_only.iter().take(max_agents) {
-            let summary = format!(
-                "{} starting",
-                truncate_line_to_width(id, 10),
-            );
-            lines.push(Line::from(Span::styled(
-                truncate_line_to_width(&summary, content_width.max(1)),
-                Style::default().fg(palette::STATUS_WARNING),
-            )));
-            lines.push(Line::from(Span::styled(
-                format!(
-                    "  {}",
-                    truncate_line_to_width(msg, content_width.saturating_sub(2).max(1))
-                ),
-                Style::default().fg(palette::TEXT_DIM),
-            )));
+            let summary = format!("{} starting", truncate_line_to_width(id, 10));
+            push_agent_row(&mut lines, &summary, msg, palette::STATUS_WARNING);
             rendered += 1;
         }
 
@@ -391,20 +393,12 @@ fn render_sidebar_subagents(f: &mut Frame, area: Rect, app: &App) {
                 truncate_line_to_width(&agent.agent_id, 10),
                 agent.steps_taken
             );
-            lines.push(Line::from(Span::styled(
-                truncate_line_to_width(&summary, content_width.max(1)),
-                Style::default().fg(status_color),
-            )));
-            lines.push(Line::from(Span::styled(
-                format!(
-                    "  {}",
-                    truncate_line_to_width(
-                        &agent.assignment.objective,
-                        content_width.saturating_sub(2).max(1)
-                    )
-                ),
-                Style::default().fg(palette::TEXT_DIM),
-            )));
+            push_agent_row(
+                &mut lines,
+                &summary,
+                &agent.assignment.objective,
+                status_color,
+            );
             rendered += 1;
         }
 

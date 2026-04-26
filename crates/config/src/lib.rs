@@ -483,6 +483,22 @@ fn normalize_model_for_provider(provider: ProviderKind, model: &str) -> String {
             "deepseek-v4-flash" | "deepseek-v4flash" | "deepseek-chat" | "deepseek-reasoner"
             | "deepseek-r1" | "deepseek-v3" | "deepseek-v3.2",
         ) => DEFAULT_NVIDIA_NIM_FLASH_MODEL.to_string(),
+        (ProviderKind::Openrouter, "deepseek-v4-pro" | "deepseek-v4pro") => {
+            DEFAULT_OPENROUTER_MODEL.to_string()
+        }
+        (
+            ProviderKind::Openrouter,
+            "deepseek-v4-flash" | "deepseek-v4flash" | "deepseek-chat" | "deepseek-reasoner"
+            | "deepseek-r1" | "deepseek-v3" | "deepseek-v3.2",
+        ) => DEFAULT_OPENROUTER_FLASH_MODEL.to_string(),
+        (ProviderKind::Novita, "deepseek-v4-pro" | "deepseek-v4pro") => {
+            DEFAULT_NOVITA_MODEL.to_string()
+        }
+        (
+            ProviderKind::Novita,
+            "deepseek-v4-flash" | "deepseek-v4flash" | "deepseek-chat" | "deepseek-reasoner"
+            | "deepseek-r1" | "deepseek-v3" | "deepseek-v3.2",
+        ) => DEFAULT_NOVITA_FLASH_MODEL.to_string(),
         _ => model.to_string(),
     }
 }
@@ -606,9 +622,13 @@ struct EnvRuntimeOverrides {
     deepseek_api_key: Option<String>,
     openai_api_key: Option<String>,
     nvidia_api_key: Option<String>,
+    openrouter_api_key: Option<String>,
+    novita_api_key: Option<String>,
     deepseek_base_url: Option<String>,
     nvidia_base_url: Option<String>,
     openai_base_url: Option<String>,
+    openrouter_base_url: Option<String>,
+    novita_base_url: Option<String>,
 }
 
 impl EnvRuntimeOverrides {
@@ -647,6 +667,18 @@ impl EnvRuntimeOverrides {
             openai_base_url: std::env::var("OPENAI_BASE_URL")
                 .ok()
                 .filter(|v| !v.trim().is_empty()),
+            openrouter_api_key: std::env::var("OPENROUTER_API_KEY")
+                .ok()
+                .filter(|v| !v.trim().is_empty()),
+            novita_api_key: std::env::var("NOVITA_API_KEY")
+                .ok()
+                .filter(|v| !v.trim().is_empty()),
+            openrouter_base_url: std::env::var("OPENROUTER_BASE_URL")
+                .ok()
+                .filter(|v| !v.trim().is_empty()),
+            novita_base_url: std::env::var("NOVITA_BASE_URL")
+                .ok()
+                .filter(|v| !v.trim().is_empty()),
         }
     }
 
@@ -658,6 +690,8 @@ impl EnvRuntimeOverrides {
                 .clone()
                 .or_else(|| self.deepseek_api_key.clone()),
             ProviderKind::Openai => self.openai_api_key.clone(),
+            ProviderKind::Openrouter => self.openrouter_api_key.clone(),
+            ProviderKind::Novita => self.novita_api_key.clone(),
         }
     }
 
@@ -666,6 +700,14 @@ impl EnvRuntimeOverrides {
             ProviderKind::Deepseek => self.deepseek_base_url.clone(),
             ProviderKind::NvidiaNim => self.nvidia_base_url.clone(),
             ProviderKind::Openai => self.openai_base_url.clone(),
+            ProviderKind::Openrouter => self
+                .openrouter_base_url
+                .clone()
+                .or_else(|| Some("https://openrouter.ai/api/v1".to_string())),
+            ProviderKind::Novita => self
+                .novita_base_url
+                .clone()
+                .or_else(|| Some("https://api.novita.ai/v1".to_string())),
         }
     }
 }

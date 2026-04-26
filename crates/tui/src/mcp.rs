@@ -361,16 +361,12 @@ impl SseTransport {
         tx: tokio::sync::mpsc::UnboundedSender<serde_json::Value>,
         cancel_token: tokio_util::sync::CancellationToken,
     ) -> Result<()> {
-        let response = client
-            .get(&url)
-            .send()
-            .await
-            .with_context(|| {
-                format!(
-                    "MCP SSE connect failed (transport=http url={})",
-                    mask_url_secrets(&url),
-                )
-            })?;
+        let response = client.get(&url).send().await.with_context(|| {
+            format!(
+                "MCP SSE connect failed (transport=http url={})",
+                mask_url_secrets(&url),
+            )
+        })?;
         let status = response.status();
         if !status.is_success() {
             let body_excerpt = bounded_body_excerpt(response, ERROR_BODY_PREVIEW_BYTES).await;
@@ -1916,6 +1912,9 @@ mod tests {
         let redacted = redact_body_preview("error message api_key=sk-12345&other=val");
         assert!(redacted.contains("api_key=***"), "redacted: {redacted}");
         assert!(!redacted.contains("sk-12345"), "leaked: {redacted}");
-        assert!(redacted.contains("other=val"), "non-secret preserved: {redacted}");
+        assert!(
+            redacted.contains("other=val"),
+            "non-secret preserved: {redacted}"
+        );
     }
 }

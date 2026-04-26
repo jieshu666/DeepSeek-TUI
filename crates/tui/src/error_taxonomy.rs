@@ -21,6 +21,11 @@ pub enum ErrorCategory {
 }
 
 /// Severity hint for UI and logs.
+///
+/// Adopted in `From<LlmError>` / `From<ToolError>` and exercised by tests, but
+/// not yet read by an audit-log writer or TUI severity colorer. Pending #66
+/// follow-up; the type is stable.
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ErrorSeverity {
@@ -31,6 +36,11 @@ pub enum ErrorSeverity {
 }
 
 /// Unified envelope used when crossing subsystem boundaries.
+///
+/// Constructed by the `From<LlmError>` / `From<ToolError>` impls below and
+/// validated by tests, but the engine still emits errors as `(String, bool)`
+/// pairs on the event channel. Pending #66 follow-up.
+#[allow(dead_code)]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ErrorEnvelope {
     pub category: ErrorCategory,
@@ -79,6 +89,7 @@ impl fmt::Display for ErrorEnvelope {
 impl std::error::Error for ErrorEnvelope {}
 
 impl ErrorEnvelope {
+    #[allow(dead_code)]
     #[must_use]
     pub fn new(
         category: ErrorCategory,
@@ -220,7 +231,9 @@ pub fn classify_error_message(message: &str) -> ErrorCategory {
     if lower.contains("parse") || lower.contains("syntax") || lower.contains("malformed") {
         return ErrorCategory::Parse;
     }
-    if lower.contains("not found") || lower.contains("unavailable") || lower.contains("not available")
+    if lower.contains("not found")
+        || lower.contains("unavailable")
+        || lower.contains("not available")
     {
         return ErrorCategory::State;
     }

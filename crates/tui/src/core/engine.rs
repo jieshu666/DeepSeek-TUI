@@ -3335,16 +3335,16 @@ impl Engine {
         mode: AppMode,
         step_error_count: usize,
         consecutive_tool_error_steps: u32,
-        #[allow(clippy::needless_pass_by_ref_mut)] // error_categories will be used in future escalation logic
+        #[allow(clippy::needless_pass_by_ref_mut)]
+        // error_categories will be used in future escalation logic
         error_categories: &[crate::error_taxonomy::ErrorCategory],
     ) -> bool {
         if step_error_count == 0 && consecutive_tool_error_steps < 2 {
             return false;
         }
 
-        let has_context_overflow = error_categories
-            .iter()
-            .any(|&cat| cat == crate::error_taxonomy::ErrorCategory::InvalidInput);
+        let has_context_overflow =
+            error_categories.contains(&crate::error_taxonomy::ErrorCategory::InvalidInput);
 
         if !has_context_overflow && consecutive_tool_error_steps < 2 {
             // Only escalate on non-context errors when we have consecutive failures
@@ -3380,10 +3380,7 @@ impl Engine {
             return false;
         }
 
-        let category_labels: Vec<String> = error_categories
-            .iter()
-            .map(|c| c.to_string())
-            .collect();
+        let category_labels: Vec<String> = error_categories.iter().map(|c| c.to_string()).collect();
         self.apply_verify_and_replan(
             turn,
             mode,

@@ -282,7 +282,10 @@ impl Settings {
             ("auto_compact", "Auto-compact conversations: on/off"),
             ("calm_mode", "Calmer UI defaults: on/off"),
             ("low_motion", "Reduce animation and redraw churn: on/off"),
-            ("fancy_animations", "Fancy footer animations (water-spout strip): on/off"),
+            (
+                "fancy_animations",
+                "Fancy footer animations (water-spout strip): on/off",
+            ),
             ("show_thinking", "Show model thinking: on/off"),
             ("show_tool_details", "Show detailed tool output: on/off"),
             (

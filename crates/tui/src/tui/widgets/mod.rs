@@ -383,8 +383,12 @@ impl Renderable for ComposerWidget<'_> {
             };
             let menu_bottom = (menu_top + menu_visible_rows).min(menu_total);
 
-            for idx in menu_top..menu_bottom {
-                let entry = &menu_entries[idx];
+            for (idx, entry) in menu_entries
+                .iter()
+                .enumerate()
+                .take(menu_bottom)
+                .skip(menu_top)
+            {
                 let is_selected = idx == selected;
                 let style = if is_selected {
                     Style::default()

@@ -23,8 +23,8 @@ use ratatui::{
     text::Span,
     widgets::Block,
 };
-use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 use tracing;
+use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
 use crate::audit::log_sensitive_event;
 use crate::client::DeepSeekClient;
@@ -519,10 +519,8 @@ async fn run_event_loop(
                             "agent_spawn" | "agent_swarm" | "agent_cancel" | "todo_write"
                         ) {
                             let tasks = task_manager.list_tasks(Some(10)).await;
-                            app.task_panel = tasks
-                                .into_iter()
-                                .map(task_summary_to_panel_entry)
-                                .collect();
+                            app.task_panel =
+                                tasks.into_iter().map(task_summary_to_panel_entry).collect();
                             last_task_refresh = Instant::now();
                         }
                     }

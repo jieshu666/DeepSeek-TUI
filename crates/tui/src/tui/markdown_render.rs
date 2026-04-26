@@ -27,7 +27,8 @@
 use std::sync::Arc;
 
 #[cfg(any(test, feature = "perf-counters"))]
-use std::sync::atomic::{AtomicU64, Ordering};
+#[cfg(any(test, feature = "perf-counters"))]
+use std::cell::Cell;
 
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
@@ -40,18 +41,23 @@ use crate::palette;
 ///
 /// Available in test builds and behind the `perf-counters` feature flag so
 /// release builds pay no cost.
+// Thread-local instead of a global atomic so concurrent tests that call
+// `parse()` don't pollute each other's counters. Each test thread sees only
+// its own invocations.
 #[cfg(any(test, feature = "perf-counters"))]
-static PARSE_INVOCATIONS: AtomicU64 = AtomicU64::new(0);
+thread_local! {
+    static PARSE_INVOCATIONS: Cell<u64> = const { Cell::new(0) };
+}
 
 #[cfg(any(test, feature = "perf-counters"))]
 #[must_use]
 pub fn parse_invocation_count() -> u64 {
-    PARSE_INVOCATIONS.load(Ordering::Relaxed)
+    PARSE_INVOCATIONS.with(|c| c.get())
 }
 
 #[cfg(any(test, feature = "perf-counters"))]
 pub fn reset_parse_invocation_count() {
-    PARSE_INVOCATIONS.store(0, Ordering::Relaxed);
+    PARSE_INVOCATIONS.with(|c| c.set(0));
 }
 
 /// One classified line of markdown source, width-independent.
@@ -109,7 +115,7 @@ impl ParsedMarkdown {
 #[must_use]
 pub fn parse(content: &str) -> ParsedMarkdown {
     #[cfg(any(test, feature = "perf-counters"))]
-    PARSE_INVOCATIONS.fetch_add(1, Ordering::Relaxed);
+    PARSE_INVOCATIONS.with(|c| c.set(c.get() + 1));
 
     let mut blocks = Vec::new();
     let mut in_code_block = false;
@@ -485,6 +491,8 @@ mod tests {
 
     #[test]
     fn parse_invocations_increment() {
+        // Counter is thread-local, so concurrent tests calling `parse()`
+        // can't pollute each other.
         reset_parse_invocation_count();
         let _ = parse("hello\n");
         let _ = parse("world\n");

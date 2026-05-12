@@ -195,7 +195,7 @@ function installFailureHint(error) {
     "  If GitHub is unavailable on this network, mirror the release assets and set:",
     "    DEEPSEEK_TUI_RELEASE_BASE_URL=https://<mirror>/<release-asset-directory>/",
     "  The directory must contain deepseek-artifacts-sha256.txt and the platform binaries.",
-    "  See docs/INSTALL.md#npm-download-is-slow-or-times-out-from-mainland-china.",
+    "  See docs/INSTALL.md#npm-binary-download-times-out.",
   ].join("\n");
 }
 
@@ -790,6 +790,14 @@ async function withRetry(label, fn, context = "runtime") {
       logInfo(
         `${label} failed (attempt ${attempt}/${attemptLimit}): ${err.message}; retrying in ${wait} ms`,
       );
+      // Show the install hint on the first retryable failure so users
+      // don't have to wait through all attempts before seeing solutions.
+      if (attempt === 1) {
+        const hint = installFailureHint(err);
+        if (hint) {
+          process.stderr.write(`${hint}\n`);
+        }
+      }
       await sleep(wait);
     }
   }

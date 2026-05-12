@@ -455,6 +455,20 @@ fn render_sidebar_tasks(f: &mut Frame, area: Rect, app: &App) {
         }
     }
 
+    // Show kill hint when shell tasks are running
+    let has_shell_jobs = app
+        .task_panel
+        .iter()
+        .any(|task| task.id.starts_with("shell_") && task.status == "running");
+    if has_shell_jobs {
+        lines.push(Line::from(Span::styled(
+            "Ctrl+K -> /jobs cancel-all",
+            Style::default()
+                .fg(palette::TEXT_MUTED)
+                .add_modifier(ratatui::style::Modifier::ITALIC),
+        )));
+    }
+
     render_sidebar_section(f, area, "Tasks", lines, app);
 }
 

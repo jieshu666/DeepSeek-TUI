@@ -54,8 +54,11 @@ pub fn jobs(_app: &mut App, args: Option<&str>) -> CommandResult {
             })),
             None => CommandResult::error("Usage: /jobs cancel <id>"),
         },
+        "cancel-all" | "kill-all" | "stop-all" => {
+            CommandResult::action(AppAction::ShellJob(ShellJobAction::CancelAll))
+        }
         _ => CommandResult::error(
-            "Usage: /jobs [list|show <id>|poll <id>|wait <id>|stdin <id> <input>|close-stdin <id>|cancel <id>]",
+            "Usage: /jobs [list|show <id>|poll <id>|wait <id>|stdin <id> <input>|close-stdin <id>|cancel <id>|cancel-all]",
         ),
     }
 }

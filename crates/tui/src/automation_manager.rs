@@ -127,6 +127,17 @@ pub enum AutomationSchedule {
         byhour: u32,
         byminute: u32,
     },
+    Monthly {
+        bymonthday: u32,
+        byhour: u32,
+        byminute: u32,
+    },
+    Yearly {
+        bymonth: u32,
+        bymonthday: u32,
+        byhour: u32,
+        byminute: u32,
+    },
 }
 
 impl AutomationSchedule {
@@ -146,7 +157,9 @@ impl AutomationSchedule {
         let freq = match parts.get("FREQ").map(String::as_str) {
             Some("HOURLY") => AutomationFrequency::Hourly,
             Some("WEEKLY") => AutomationFrequency::Weekly,
-            Some(other) => bail!("Unsupported RRULE FREQ '{other}'. Supported: HOURLY and WEEKLY"),
+            Some("MONTHLY") => AutomationFrequency::Monthly,
+            Some("YEARLY") => AutomationFrequency::Yearly,
+            Some(other) => bail!("Unsupported RRULE FREQ '{other}'. Supported: HOURLY, WEEKLY, MONTHLY, YEARLY"),
             None => bail!("RRULE must include FREQ"),
         };
 
@@ -216,6 +229,91 @@ impl AutomationSchedule {
                     byminute,
                 })
             }
+            AutomationFrequency::Monthly => {
+                for key in parts.keys() {
+                    if key != "FREQ" && key != "BYMONTHDAY" && key != "BYHOUR" && key != "BYMINUTE" {
+                        bail!(
+                            "Unsupported RRULE field '{key}' for MONTHLY. Allowed: FREQ,BYMONTHDAY,BYHOUR,BYMINUTE"
+                        );
+                    }
+                }
+                let bymonthday = parts
+                    .get("BYMONTHDAY")
+                    .ok_or_else(|| anyhow::anyhow!("MONTHLY schedules require BYMONTHDAY"))?
+                    .parse::<u32>()
+                    .context("Failed to parse BYMONTHDAY")?;
+                if bymonthday < 1 || bymonthday > 31 {
+                    bail!("BYMONTHDAY must be between 1 and 31");
+                }
+                let byhour = parts
+                    .get("BYHOUR")
+                    .ok_or_else(|| anyhow::anyhow!("MONTHLY schedules require BYHOUR"))?
+                    .parse::<u32>()
+                    .context("Failed to parse BYHOUR")?;
+                let byminute = parts
+                    .get("BYMINUTE")
+                    .ok_or_else(|| anyhow::anyhow!("MONTHLY schedules require BYMINUTE"))?
+                    .parse::<u32>()
+                    .context("Failed to parse BYMINUTE")?;
+                if byhour > 23 {
+                    bail!("BYHOUR must be between 0 and 23");
+                }
+                if byminute > 59 {
+                    bail!("BYMINUTE must be between 0 and 59");
+                }
+                Ok(Self::Monthly {
+                    bymonthday,
+                    byhour,
+                    byminute,
+                })
+            }
+            AutomationFrequency::Yearly => {
+                for key in parts.keys() {
+                    if key != "FREQ" && key != "BYMONTH" && key != "BYMONTHDAY" && key != "BYHOUR" && key != "BYMINUTE" {
+                        bail!(
+                            "Unsupported RRULE field '{key}' for YEARLY. Allowed: FREQ,BYMONTH,BYMONTHDAY,BYHOUR,BYMINUTE"
+                        );
+                    }
+                }
+                let bymonth = parts
+                    .get("BYMONTH")
+                    .ok_or_else(|| anyhow::anyhow!("YEARLY schedules require BYMONTH"))?
+                    .parse::<u32>()
+                    .context("Failed to parse BYMONTH")?;
+                if bymonth < 1 || bymonth > 12 {
+                    bail!("BYMONTH must be between 1 and 12");
+                }
+                let bymonthday = parts
+                    .get("BYMONTHDAY")
+                    .ok_or_else(|| anyhow::anyhow!("YEARLY schedules require BYMONTHDAY"))?
+                    .parse::<u32>()
+                    .context("Failed to parse BYMONTHDAY")?;
+                if bymonthday < 1 || bymonthday > 31 {
+                    bail!("BYMONTHDAY must be between 1 and 31");
+                }
+                let byhour = parts
+                    .get("BYHOUR")
+                    .ok_or_else(|| anyhow::anyhow!("YEARLY schedules require BYHOUR"))?
+                    .parse::<u32>()
+                    .context("Failed to parse BYHOUR")?;
+                let byminute = parts
+                    .get("BYMINUTE")
+                    .ok_or_else(|| anyhow::anyhow!("YEARLY schedules require BYMINUTE"))?
+                    .parse::<u32>()
+                    .context("Failed to parse BYMINUTE")?;
+                if byhour > 23 {
+                    bail!("BYHOUR must be between 0 and 23");
+                }
+                if byminute > 59 {
+                    bail!("BYMINUTE must be between 0 and 59");
+                }
+                Ok(Self::Yearly {
+                    bymonth,
+                    bymonthday,
+                    byhour,
+                    byminute,
+                })
+            }
         }
     }
 
@@ -263,7 +361,76 @@ impl AutomationSchedule {
                 }
                 bail!("Unable to compute next WEEKLY run");
             }
+            Self::Monthly {
+                bymonthday,
+                byhour,
+                byminute,
+            } => {
+                let after_naive = local_after.date_naive();
+                let current_month = after_naive.month();
+                let current_year = after_naive.year();
+                for month_offset in 0..14 {
+                    let target_month = current_month + month_offset;
+                    let target_year = current_year + (target_month - 1) / 12;
+                    let target_month = (target_month - 1) % 12 + 1;
+                    let max_day = days_in_month(target_year, target_month);
+                    let day = (*bymonthday).min(max_day);
+                    let Some(candidate_naive) = chrono::NaiveDate::from_ymd_opt(target_year, target_month, day)
+                        .and_then(|d| d.and_hms_opt(*byhour, *byminute, 0))
+                    else {
+                        continue;
+                    };
+                    if let Some(candidate) = resolve_local_datetime(candidate_naive)
+                        && candidate > local_after
+                    {
+                        return Ok(candidate.with_timezone(&Utc));
+                    }
+                }
+                bail!("Unable to compute next MONTHLY run");
+            }
+            Self::Yearly {
+                bymonth,
+                bymonthday,
+                byhour,
+                byminute,
+            } => {
+                let after_naive = local_after.date_naive();
+                for year_offset in 0..5 {
+                    let target_year = after_naive.year() + year_offset;
+                    if target_year == after_naive.year() && *bymonth < after_naive.month() {
+                        continue;
+                    }
+                    let max_day = days_in_month(target_year, *bymonth);
+                    let day = (*bymonthday).min(max_day);
+                    let Some(candidate_naive) = chrono::NaiveDate::from_ymd_opt(target_year, *bymonth, day)
+                        .and_then(|d| d.and_hms_opt(*byhour, *byminute, 0))
+                    else {
+                        continue;
+                    };
+                    if let Some(candidate) = resolve_local_datetime(candidate_naive)
+                        && candidate > local_after
+                    {
+                        return Ok(candidate.with_timezone(&Utc));
+                    }
+                }
+                bail!("Unable to compute next YEARLY run");
+            }
         }
+    }
+}
+
+fn days_in_month(year: i32, month: u32) -> u32 {
+    match month {
+        1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
+        4 | 6 | 9 | 11 => 30,
+        2 => {
+            if (year % 4 == 0 && year % 100 != 0) || year % 400 == 0 {
+                29
+            } else {
+                28
+            }
+        }
+        _ => 30,
     }
 }
 

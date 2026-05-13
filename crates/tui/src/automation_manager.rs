@@ -269,7 +269,12 @@ impl AutomationSchedule {
             }
             AutomationFrequency::Yearly => {
                 for key in parts.keys() {
-                    if key != "FREQ" && key != "BYMONTH" && key != "BYMONTHDAY" && key != "BYHOUR" && key != "BYMINUTE" {
+                    if key != "FREQ"
+                        && key != "BYMONTH"
+                        && key != "BYMONTHDAY"
+                        && key != "BYHOUR"
+                        && key != "BYMINUTE"
+                    {
                         bail!(
                             "Unsupported RRULE field '{key}' for YEARLY. Allowed: FREQ,BYMONTH,BYMONTHDAY,BYHOUR,BYMINUTE"
                         );
@@ -374,8 +379,9 @@ impl AutomationSchedule {
                     let target_month = ((target_month_i32 - 1).rem_euclid(12) + 1) as u32;
                     let max_day = days_in_month(target_year, target_month);
                     let day = (*bymonthday).min(max_day);
-                    let Some(candidate_naive) = chrono::NaiveDate::from_ymd_opt(target_year, target_month, day)
-                        .and_then(|d| d.and_hms_opt(*byhour, *byminute, 0))
+                    let Some(candidate_naive) =
+                        chrono::NaiveDate::from_ymd_opt(target_year, target_month, day)
+                            .and_then(|d| d.and_hms_opt(*byhour, *byminute, 0))
                     else {
                         continue;
                     };
@@ -401,8 +407,9 @@ impl AutomationSchedule {
                     }
                     let max_day = days_in_month(target_year, *bymonth);
                     let day = (*bymonthday).min(max_day);
-                    let Some(candidate_naive) = chrono::NaiveDate::from_ymd_opt(target_year, *bymonth, day)
-                        .and_then(|d| d.and_hms_opt(*byhour, *byminute, 0))
+                    let Some(candidate_naive) =
+                        chrono::NaiveDate::from_ymd_opt(target_year, *bymonth, day)
+                            .and_then(|d| d.and_hms_opt(*byhour, *byminute, 0))
                     else {
                         continue;
                     };

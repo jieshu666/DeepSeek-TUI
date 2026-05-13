@@ -159,7 +159,9 @@ impl AutomationSchedule {
             Some("WEEKLY") => AutomationFrequency::Weekly,
             Some("MONTHLY") => AutomationFrequency::Monthly,
             Some("YEARLY") => AutomationFrequency::Yearly,
-            Some(other) => bail!("Unsupported RRULE FREQ '{other}'. Supported: HOURLY, WEEKLY, MONTHLY, YEARLY"),
+            Some(other) => bail!(
+                "Unsupported RRULE FREQ '{other}'. Supported: HOURLY, WEEKLY, MONTHLY, YEARLY"
+            ),
             None => bail!("RRULE must include FREQ"),
         };
 
@@ -231,7 +233,8 @@ impl AutomationSchedule {
             }
             AutomationFrequency::Monthly => {
                 for key in parts.keys() {
-                    if key != "FREQ" && key != "BYMONTHDAY" && key != "BYHOUR" && key != "BYMINUTE" {
+                    if key != "FREQ" && key != "BYMONTHDAY" && key != "BYHOUR" && key != "BYMINUTE"
+                    {
                         bail!(
                             "Unsupported RRULE field '{key}' for MONTHLY. Allowed: FREQ,BYMONTHDAY,BYHOUR,BYMINUTE"
                         );

@@ -367,12 +367,11 @@ impl AutomationSchedule {
                 byminute,
             } => {
                 let after_naive = local_after.date_naive();
-                let current_month = after_naive.month();
                 let current_year = after_naive.year();
-                for month_offset in 0..14 {
-                    let target_month = current_month + month_offset;
-                    let target_year = current_year + (target_month - 1) / 12;
-                    let target_month = (target_month - 1) % 12 + 1;
+                for month_offset in 0i32..14 {
+                    let target_month_i32 = after_naive.month() as i32 + month_offset;
+                    let target_year = current_year + (target_month_i32 - 1) / 12;
+                    let target_month = ((target_month_i32 - 1).rem_euclid(12) + 1) as u32;
                     let max_day = days_in_month(target_year, target_month);
                     let day = (*bymonthday).min(max_day);
                     let Some(candidate_naive) = chrono::NaiveDate::from_ymd_opt(target_year, target_month, day)

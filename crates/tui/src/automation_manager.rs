@@ -247,7 +247,7 @@ impl AutomationSchedule {
                     .ok_or_else(|| anyhow::anyhow!("MONTHLY schedules require BYMONTHDAY"))?
                     .parse::<u32>()
                     .context("Failed to parse BYMONTHDAY")?;
-                if bymonthday < 1 || bymonthday > 31 {
+                if !(1..=31).contains(&bymonthday) {
                     bail!("BYMONTHDAY must be between 1 and 31");
                 }
                 let byhour = parts
@@ -290,7 +290,7 @@ impl AutomationSchedule {
                     .ok_or_else(|| anyhow::anyhow!("YEARLY schedules require BYMONTH"))?
                     .parse::<u32>()
                     .context("Failed to parse BYMONTH")?;
-                if bymonth < 1 || bymonth > 12 {
+                if !(1..=12).contains(&bymonth) {
                     bail!("BYMONTH must be between 1 and 12");
                 }
                 let bymonthday = parts
@@ -298,7 +298,7 @@ impl AutomationSchedule {
                     .ok_or_else(|| anyhow::anyhow!("YEARLY schedules require BYMONTHDAY"))?
                     .parse::<u32>()
                     .context("Failed to parse BYMONTHDAY")?;
-                if bymonthday < 1 || bymonthday > 31 {
+                if !(1..=31).contains(&bymonthday) {
                     bail!("BYMONTHDAY must be between 1 and 31");
                 }
                 let byhour = parts

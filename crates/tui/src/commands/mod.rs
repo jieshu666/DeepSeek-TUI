@@ -644,6 +644,16 @@ pub fn execute(cmd: &str, app: &mut App) -> CommandResult {
             if skills::run_skill_by_name(app, command, arg).is_some() {
                 return skills::run_skill_by_name(app, command, arg).unwrap();
             }
+            // When the input looks like a dragged-in absolute file path
+            // (e.g. /Users/name/file from macOS Finder), convert it to
+            // an @-mention so the file gets attached automatically
+            // instead of showing "Unknown command".
+            if cmd.trim().starts_with('/') && command.contains('/') {
+                return CommandResult::action(AppAction::SendMessage(format!(
+                    "@{}",
+                    cmd.trim()
+                )));
+            }
             let suggestions = suggest_command_names(command, 3);
             if suggestions.is_empty() {
                 CommandResult::error(format!(
@@ -1480,5 +1490,56 @@ mod tests {
             .expect("unknown command should return an error message");
         assert!(msg.contains("Unknown command: /zzzzzz"));
         assert!(msg.contains("Type /help for available commands."));
+    }
+
+    /// When the input looks like a drag-and-dropped absolute file path
+    /// (e.g. `/Users/name/file` from macOS Finder), it should be
+    /// converted to an @-mention and sent as a message instead of
+    /// showing "Unknown command".
+    #[test]
+    fn absolute_path_input_converts_to_file_mention() {
+        let mut app = create_test_app();
+        let result = execute("/Users/test/project/README.md", &mut app);
+        assert!(
+            result.message.is_none(),
+            "path input should not produce an error message, got: {:?}",
+            result.message
+        );
+        assert!(
+            !result.is_error,
+            "path input should not be an error"
+        );
+        assert_eq!(
+            result.action,
+            Some(AppAction::SendMessage("@/Users/test/project/README.md".to_string())),
+            "absolute path should be converted to @-mention SendMessage"
+        );
+    }
+
+    /// Paths with spaces are also converted to @-mentions.
+    #[test]
+    fn absolute_path_with_spaces_converts_to_file_mention() {
+        let mut app = create_test_app();
+        let result = execute("/tmp/my documents/note.txt", &mut app);
+        assert!(!result.is_error);
+        assert_eq!(
+            result.action,
+            Some(AppAction::SendMessage("@/tmp/my documents/note.txt".to_string())),
+            "path with spaces should be converted to @-mention SendMessage"
+        );
+    }
+
+    /// Single-word inputs after / (like /foo) that don't look like paths
+    /// still get the "Unknown command" treatment.
+    #[test]
+    fn non_path_single_word_after_slash_still_unknown_command() {
+        let mut app = create_test_app();
+        let result = execute("/nonesuch", &mut app);
+        assert!(result.is_error);
+        let msg = result
+            .message
+            .expect("non-path unknown command should return error");
+        assert!(msg.contains("Unknown command"));
+        assert!(result.action.is_none());
     }
 }

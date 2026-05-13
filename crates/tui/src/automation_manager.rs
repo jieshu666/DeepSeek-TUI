@@ -114,6 +114,8 @@ pub struct UpdateAutomationRequest {
 enum AutomationFrequency {
     Hourly,
     Weekly,
+    Monthly,
+    Yearly,
 }
 
 #[derive(Debug, Clone)]

@@ -649,10 +649,7 @@ pub fn execute(cmd: &str, app: &mut App) -> CommandResult {
             // an @-mention so the file gets attached automatically
             // instead of showing "Unknown command".
             if cmd.trim().starts_with('/') && command.contains('/') {
-                return CommandResult::action(AppAction::SendMessage(format!(
-                    "@{}",
-                    cmd.trim()
-                )));
+                return CommandResult::action(AppAction::SendMessage(format!("@{}", cmd.trim())));
             }
             let suggestions = suggest_command_names(command, 3);
             if suggestions.is_empty() {
@@ -1505,13 +1502,12 @@ mod tests {
             "path input should not produce an error message, got: {:?}",
             result.message
         );
-        assert!(
-            !result.is_error,
-            "path input should not be an error"
-        );
+        assert!(!result.is_error, "path input should not be an error");
         assert_eq!(
             result.action,
-            Some(AppAction::SendMessage("@/Users/test/project/README.md".to_string())),
+            Some(AppAction::SendMessage(
+                "@/Users/test/project/README.md".to_string()
+            )),
             "absolute path should be converted to @-mention SendMessage"
         );
     }
@@ -1524,7 +1520,9 @@ mod tests {
         assert!(!result.is_error);
         assert_eq!(
             result.action,
-            Some(AppAction::SendMessage("@/tmp/my documents/note.txt".to_string())),
+            Some(AppAction::SendMessage(
+                "@/tmp/my documents/note.txt".to_string()
+            )),
             "path with spaces should be converted to @-mention SendMessage"
         );
     }
